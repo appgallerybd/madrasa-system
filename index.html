@@ -1,10 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
-    <title>Madrasa System</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>তাসবীহ কাউন্টার | Madrasa System</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <h1>Welcome to the Madrasa System</h1>
-    <!-- Main content goes here -->
+  <main class="app">
+    <header class="topbar">
+      <h1>🕌 তাসবীহ কাউন্টার</h1>
+      <p>প্রতিদিনের যিকির সুন্দরভাবে গুনুন</p>
+    </header>
+
+    <section class="counter-card">
+      <div class="goal-wrap">
+        <label for="goal">লক্ষ্য (Goal)</label>
+        <input id="goal" type="number" min="1" max="100000" value="100" />
+      </div>
+
+      <div class="count-display" id="countDisplay">0</div>
+      <p class="tasbih-text" id="tasbihText">সুবহানাল্লাহ</p>
+
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <p class="progress-label" id="progressLabel">0% সম্পন্ন</p>
+
+      <div class="buttons">
+        <button id="incrementBtn" class="primary">+1 গুনুন</button>
+        <button id="decrementBtn" class="ghost">-1</button>
+        <button id="resetBtn" class="danger">রিসেট</button>
+      </div>
+
+      <div class="quick-zikr">
+        <span>দ্রুত যিকির:</span>
+        <button data-zikr="সুবহানাল্লাহ">সুবহানাল্লাহ</button>
+        <button data-zikr="আলহামদুলিল্লাহ">আলহামদুলিল্লাহ</button>
+        <button data-zikr="আল্লাহু আকবার">আল্লাহু আকবার</button>
+      </div>
+    </section>
+
+    <section class="stats-card">
+      <h2>আজকের অগ্রগতি</h2>
+      <div class="stats-grid">
+        <div><strong id="totalCount">0</strong><span>মোট কাউন্ট</span></div>
+        <div><strong id="streak">0</strong><span>লক্ষ্য পূরণ</span></div>
+        <div><strong id="best">0</strong><span>সর্বোচ্চ</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const countDisplay = document.getElementById('countDisplay');
+    const totalCountEl = document.getElementById('totalCount');
+    const streakEl = document.getElementById('streak');
+    const bestEl = document.getElementById('best');
+    const progressBar = document.getElementById('progressBar');
+    const progressLabel = document.getElementById('progressLabel');
+    const goalInput = document.getElementById('goal');
+    const tasbihText = document.getElementById('tasbihText');
+
+    const storageKey = 'tasbih-counter-data-v1';
+    const initial = { count: 0, total: 0, streak: 0, best: 0, goal: 100, zikr: 'সুবহানাল্লাহ' };
+    let state = { ...initial, ...JSON.parse(localStorage.getItem(storageKey) || '{}') };
+
+    function persist() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function vibrate(ms = 30) {
+      if (navigator.vibrate) navigator.vibrate(ms);
+    }
+
+    function updateUI() {
+      const percent = Math.min(100, Math.round((state.count / state.goal) * 100));
+      countDisplay.textContent = state.count;
+      totalCountEl.textContent = state.total;
+      streakEl.textContent = state.streak;
+      bestEl.textContent = state.best;
+      goalInput.value = state.goal;
+      tasbihText.textContent = state.zikr;
+      progressBar.style.width = percent + '%';
+      progressLabel.textContent = `${percent}% সম্পন্ন`;
+    }
+
+    function increment() {
+      state.count += 1;
+      state.total += 1;
+      state.best = Math.max(state.best, state.count);
+      if (state.count === state.goal) {
+        state.streak += 1;
+        vibrate(120);
+      } else {
+        vibrate();
+      }
+      persist();
+      updateUI();
+    }
+
+    document.getElementById('incrementBtn').addEventListener('click', increment);
+
+    document.getElementById('decrementBtn').addEventListener('click', () => {
+      state.count = Math.max(0, state.count - 1);
+      persist();
+      updateUI();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.count = 0;
+      persist();
+      updateUI();
+    });
+
+    goalInput.addEventListener('change', () => {
+      const next = Number(goalInput.value);
+      state.goal = Number.isFinite(next) && next > 0 ? Math.floor(next) : 100;
+      persist();
+      updateUI();
+    });
+
+    document.querySelectorAll('[data-zikr]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.zikr = btn.dataset.zikr;
+        persist();
+        updateUI();
+      });
+    });
+
+    updateUI();
+  </script>
 </body>
 </html>
